@@ -1,5 +1,5 @@
 {
-  "name": "VideoChat",
+  "name": "video-chat",
   "version": "0.0.0",
   "description": "Video chat for two persons",
   "main": "server.js",
