@@ -1,0 +1,15 @@
+{
+  "name": "VideoChat",
+  "version": "0.0.0",
+  "description": "Video chat for two persons",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Programulya",
+  "license": "MIT",
+  "dependencies": {
+    "socket.io": "~0.9.16",
+    "express": "^3.4.8"
+  }
+}

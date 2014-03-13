@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Video chat</title>
+        <style>
+            .frame {
+                width: 200px;
+                height: 200px;
+                border: 1px solid black;
+            }
+        </style>
+    </head>
+    <body>
+        <script src="/socket.io/socket.io.js"></script>
+        <script>
+            var clients = 0;
+            var localStream = null;
+            var socket = io.connect("http://" + location.host + "/rtc");
+            socket.on("clients", function(data) {
+                clients = data.clients;
+                document.getElementById("clients").innerHTML = data.clients;
+            });
+
+            socket.on("offer", function(data) {
+                connection.setRemoteDescription(new RTCSessionDescription(data));
+                connection.createAnswer(setLocalDescriptionAnswer, null, {});
+            });
+
+            socket.on("candidate", function(data) {
+                var candidate = new RTCIceCandidate({
+                            sdpMLineIndex: data.label,
+                            candidate: data.candidate
+                        }
+                );
+                connection.addIceCandidate(candidate);
+            });
+
+            socket.on("answer", function(data) {
+                connection.setRemoteDescription(new RTCSessionDescription(data));
+            });
+
+            window.getUserMedia = navigator.webkitGetUserMedia.bind(navigator);
+            window.RTCPeerConnection = webkitRTCPeerConnection;
+
+            var onUserMediaSuccess = function(stream) {
+                localStream = stream;
+                document.getElementById("localVideo").src = webkitURL.createObjectURL(stream);
+                createPeerConnection();
+            };
+
+            var onUserMediaFailure = function(error) {
+                window.alert(error);
+            };
+
+            var setLocalDescription = function(sessionDescription) {
+                connection.setLocalDescription(sessionDescription);
+                socket.emit("offer", sessionDescription);
+            };
+
+            var setLocalDescriptionAnswer = function(sessionDescription) {
+                connection.setLocalDescription(sessionDescription);
+                socket.emit("answer", sessionDescription);
+            };
+
+            var createPeerConnection = function() {
+                window.connection = new RTCPeerConnection({iceServers: [
+                    {url: "stun:stun.l.google.com:19382"}
+                ]});
+
+                connection.addStream(localStream);
+                connection.onicecandidate = function(event) {
+                    if (event.candidate) {
+                        socket.emit("candidate", {
+                            label: event.candidate.sdpMLineIndex,
+                            id: event.candidate.sdpMid,
+                            candidate: event.candidate.candidate
+                        });
+                    }
+                };
+
+                connection.onaddstream = function(event) {
+                    document.getElementById("remoteVideo").src = webkitURL.createObjectURL(event.stream);
+                };
+            };
+
+            function doCall() {
+                if (clients === 2) {
+                    connection.createOffer(setLocalDescription, null, {});
+                }
+            }
+
+            getUserMedia({audio: true, video: true}, onUserMediaSuccess, onUserMediaFailure);
+        </script>
+
+        <div>
+            <video id="localVideo" class="frame" autoplay=""></video>
+            <video id="remoteVideo" class="frame" autoplay=""></video>
+        </div>
+        <div>
+            <label id="clients"></label>
+            <button onclick="doCall();">Do Calls</button>
+        </div>
+    </body>
+</html>
