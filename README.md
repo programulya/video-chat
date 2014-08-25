@@ -1,3 +1,3 @@
 Video chat
 ==========
-Video chat for two persons via webRTC.
+Video chat for two persons via WebRTC.
